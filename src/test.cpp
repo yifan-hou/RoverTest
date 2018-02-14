@@ -8,7 +8,6 @@ int main(int argc, char** argv)
 	ZZJHand *hand = ZZJHand::Instance();
 
 	hand->openEpos();
-	// hand->closeEpos();
 
 	hand->getHomePos();
 
@@ -21,13 +20,13 @@ int main(int argc, char** argv)
 	} 
 
 	getchar();
-	if(hand->openFinger() != MMC_SUCCESS)
-	{
-		hand->closeEpos();
-		return -1;
-	} 
+	// if(hand->openFinger() != MMC_SUCCESS)
+	// {
+	// 	hand->closeEpos();
+	// 	return -1;
+	// } 
 	
-	getchar();
+	// getchar();
 	if(hand->DoPivotGrasp() != MMC_SUCCESS)
 	{
 		hand->closeEpos();

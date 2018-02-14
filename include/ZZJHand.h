@@ -22,6 +22,9 @@
 
 // control parameters
 
+// Position tolerance (counts)
+#define POSITION_TOLERANCE 50
+
 // current for closing finger
 #define CURRENT_BREAKAWAY_CLOSING 800 // mA
 #define CURRENT_PIVOT_GRASP 350
@@ -31,7 +34,10 @@
 #define CURRENT_BREAKAWAY_OPENING 1000 // mA
 #define CURRENT_OPEN_FINGER 400
 
-// #define OPEN_FINGER_DIST 500000
+// release
+#define OPEN_FINGER_DIST_mm 8.5 //3.5
+
+
 
 class ZZJHand
 {
@@ -65,6 +71,8 @@ private:
 
 	int _home_pos;
 	bool _home_pos_set;
+	int _grasp_pos;
+	bool _grasp_pos_set;
 
 };
 

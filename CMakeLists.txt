@@ -14,9 +14,10 @@ include_directories(
 ## Compile Libraries ##
 #######################
 
-add_library(Hand src/ZZJHand.cpp)
+add_library(Hand SHARED src/ZZJHand.cpp)
 target_link_libraries(Hand 
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86_64/libEposCmd.so.6.2.1.0
+  libEposCmd.so
+  # /usr0/home/yifanh/Git/ZZJHand/lib/x86_64/libEposCmd.so.6.2.1.0
 )
 add_executable(${PROJECT_NAME} src/test.cpp)
 target_link_libraries(${PROJECT_NAME}

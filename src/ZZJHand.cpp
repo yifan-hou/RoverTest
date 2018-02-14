@@ -55,6 +55,7 @@ ZZJHand* ZZJHand::Instance()
 ZZJHand::ZZJHand()
 {
 	_home_pos_set = false;
+	_grasp_pos_set = false;
 }
 
 ZZJHand & ZZJHand::operator=(const ZZJHand & olc)
@@ -180,7 +181,7 @@ int ZZJHand::getHomePos()
 				LogError("VCS_GetVelocityIs", lResult, ulErrorCode);
 				lResult = MMC_FAILED;
 			}
-			cout << "pVelocityIs: " << pVelocityIs << "count: " << zero_count << endl;
+			// cout << "pVelocityIs: " << pVelocityIs << "count: " << zero_count << endl;
 			if (pVelocityIs == 0)
 				zero_count++;
 			else
@@ -247,10 +248,18 @@ int ZZJHand::openFinger()
 			{
 				LogError("VCS_GetPositionIs", lResult, ulErrorCode);
 				lResult = MMC_FAILED;
+				break;
 			}
-			cout << "Goal: " << pos_set << " Now" << pPositionIs << endl; 
-			if (pPositionIs > pos_set) 	break;
+			// cout << "Open finger Goal: " << pos_set << " Now: " << pPositionIs << endl; 
+			if (abs(pPositionIs - pos_set) < POSITION_TOLERANCE) 	break;
+			if(VCS_SetPositionMust(g_pKeyHandle, g_usNodeId, pos_set, &ulErrorCode) == 0)
+			{
+				LogError("VCS_SetPositionMust", lResult, ulErrorCode);
+				lResult = MMC_FAILED;
+				break;
+			}
 		}
+		cout << "finger opened." << endl;
 	}
 	return lResult;
 }
@@ -258,14 +267,64 @@ int ZZJHand::openFinger()
 int ZZJHand::DoFirmGrasp()
 {
 	int current_set = -OPEN_FINGER_SIGN*CURRENT_FIRM_GRASP;
-	return closeFinger(current_set);
+	_grasp_pos      = closeFinger(current_set);
+	_grasp_pos_set  = true;
+	return MMC_SUCCESS;
 }
-
 
 int ZZJHand::DoPivotGrasp()
 {
 	int current_set = -OPEN_FINGER_SIGN*CURRENT_PIVOT_GRASP;
-	return closeFinger(current_set);
+	if (_grasp_pos_set)
+	{
+		// position control instead
+		int lResult = MMC_SUCCESS;
+		unsigned int ulErrorCode = 0;
+
+		cout << "Pivot Grasp, node = " << g_usNodeId << endl;
+
+		if(VCS_ActivatePositionMode(g_pKeyHandle, g_usNodeId, &ulErrorCode) == 0)
+		{
+			LogError("VCS_ActivatePositionMode", lResult, ulErrorCode);
+			lResult = MMC_FAILED;
+		}
+		else
+		{
+			long pos_set = this->_grasp_pos + OPEN_FINGER_DIST_mm*MM2COUNT*OPEN_FINGER_SIGN;
+			if(VCS_SetPositionMust(g_pKeyHandle, g_usNodeId, pos_set, &ulErrorCode) == 0)
+			{
+				LogError("VCS_SetPositionMust", lResult, ulErrorCode);
+				lResult = MMC_FAILED;
+			}
+			// block thread until position is attained
+			int pPositionIs = 0;
+			for (;;)
+			{
+				if(VCS_GetPositionIs(g_pKeyHandle, g_usNodeId, &pPositionIs, &ulErrorCode) == 0)
+				{
+					LogError("VCS_GetPositionIs", lResult, ulErrorCode);
+					lResult = MMC_FAILED;
+					break;
+				}
+				if (abs(pPositionIs - pos_set) < POSITION_TOLERANCE) break;
+				cout << "Pivoting Goal: " << pos_set << " Now: " << pPositionIs << endl; 
+
+				if(VCS_SetPositionMust(g_pKeyHandle, g_usNodeId, pos_set, &ulErrorCode) == 0)
+				{
+					LogError("VCS_SetPositionMust", lResult, ulErrorCode);
+					lResult = MMC_FAILED;
+					break;
+				}
+			}
+			cout << "Pivot Grasp Done." << endl; 
+		}
+		return lResult;
+	}
+	else
+	{
+		closeFinger(current_set);
+		return MMC_SUCCESS;
+	}
 }
 
 int ZZJHand::closeFinger(int grasp_current)
@@ -274,11 +333,11 @@ int ZZJHand::closeFinger(int grasp_current)
 	unsigned int ulErrorCode = 0;
 
 	cout << "Close finger, node = " << g_usNodeId << endl;
-
 	if(VCS_ActivateCurrentMode(g_pKeyHandle, g_usNodeId, &ulErrorCode) == 0)
 	{
 		LogError("VCS_ActivateCurrentMode", lResult, ulErrorCode);
 		lResult = MMC_FAILED;
+		return lResult;
 	}
 	else
 	{
@@ -320,9 +379,14 @@ int ZZJHand::closeFinger(int grasp_current)
 
 			if (zero_count > 10) break;
 		}
-
+		int current_position = 0;
+		if(VCS_GetPositionIs(g_pKeyHandle, g_usNodeId, &current_position, &ulErrorCode) == 0)
+		{
+			LogError("VCS_GetPositionIs", lResult, ulErrorCode);
+			lResult = MMC_FAILED;
+		}
+		return current_position;
 	}
-	return lResult;
 }
 
 
