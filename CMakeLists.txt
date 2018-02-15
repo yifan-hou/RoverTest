@@ -14,19 +14,19 @@ include_directories(
 ## Compile Libraries ##
 #######################
 
-add_library(Hand SHARED src/ZZJHand.cpp)
-target_link_libraries(Hand 
+add_library(RoverDriver SHARED src/RoverTest.cpp)
+target_link_libraries(RoverDriver 
   libEposCmd.so
-  # /usr0/home/yifanh/Git/ZZJHand/lib/x86_64/libEposCmd.so.6.2.1.0
 )
-add_executable(${PROJECT_NAME} src/test.cpp)
-target_link_libraries(${PROJECT_NAME}
-  Hand
+
+add_executable(unit_test src/test.cpp)
+target_link_libraries(unit_test
+  RoverDriver
 )
 
 add_executable(closeEpos src/closeEpos.cpp)
 target_link_libraries(closeEpos
-  Hand
+  RoverDriver
 )
 
 #######################

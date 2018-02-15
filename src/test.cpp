@@ -1,47 +1,33 @@
-#include "ZZJHand.h"
+#include "RoverTest.h"
 #include "stdio.h"
 #include "Definitions.h"
 
 
 int main(int argc, char** argv)
 {
-	ZZJHand *hand = ZZJHand::Instance();
+	RoverTest *rover = RoverTest::Instance();
 
-	hand->openEpos();
+	rover->openEpos();
 
-	hand->getHomePos();
-
-	
+	cout << "Press ENTER to begin homing.." << endl;	
 	getchar();
-	if(hand->DoFirmGrasp() != MMC_SUCCESS)
+
+	if(rover->home() != MMC_SUCCESS)
 	{
-		hand->closeEpos();
+		rover->closeEpos();
 		return -1;
 	} 
 
-	getchar();
-	// if(hand->openFinger() != MMC_SUCCESS)
-	// {
-	// 	hand->closeEpos();
-	// 	return -1;
-	// } 
-	
-	// getchar();
-	if(hand->DoPivotGrasp() != MMC_SUCCESS)
-	{
-		hand->closeEpos();
-		return -1;
-	} 
-
+	cout << "Press ENTER to begin Rotation.." << endl;	
 	getchar();
 
-	if(hand->openFinger() != MMC_SUCCESS)
+	if(rover->rotate(300, 300, 2000) != MMC_SUCCESS)
 	{
-		hand->closeEpos();
+		rover->closeEpos();
 		return -1;
 	} 
 	
-	hand->closeEpos();
+	rover->closeEpos();
 	
 	
 	return 0;

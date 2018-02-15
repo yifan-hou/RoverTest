@@ -1,14 +1,12 @@
-#include "ZZJHand.h"
+#include "RoverTest.h"
 #include "stdio.h"
 
 int main(int argc, char** argv)
 {
-	ZZJHand *hand = ZZJHand::Instance();
+	RoverTest *rover = RoverTest::Instance();
 
-	hand->openEpos();
-	hand->getHomePos();
-	
-	hand->closeEpos();
+	rover->openEpos();
+	rover->closeEpos();
 
 	return 0;
 }
