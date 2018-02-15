@@ -14,7 +14,7 @@ include_directories(
 ## Compile Libraries ##
 #######################
 
-add_library(RoverDriver SHARED src/RoverTest.cpp)
+add_library(RoverDriver SHARED src/RoverTest.cpp src/TimerLinux.cpp)
 target_link_libraries(RoverDriver 
   libEposCmd.so
 )
