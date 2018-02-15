@@ -1,7 +1,8 @@
+#include <iostream>
 #include "RoverTest.h"
-#include "stdio.h"
 #include "Definitions.h"
 
+using namespace std;
 
 int main(int argc, char** argv)
 {
