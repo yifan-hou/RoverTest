@@ -249,7 +249,7 @@ int RoverTest::rotate(long speed_motor_a, long speed_motor_b, int time_ms)
 	// --------------------------------------
 	// 	Send command
 	// --------------------------------------
-	timer.tic();
+	timer->tic();
 	int timenow = 0;
 	for(;;)
 	{
@@ -265,7 +265,7 @@ int RoverTest::rotate(long speed_motor_a, long speed_motor_b, int time_ms)
 			lResult = MMC_FAILED;
 			return lResult;
 		}
-		timenow = int(timer.toc());
+		timenow = int(timer->toc());
 		if (timenow > time_ms) 
 			break;
 	}
