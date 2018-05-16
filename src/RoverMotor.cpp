@@ -1,4 +1,4 @@
-#include "RoverTest.h"
+#include "RoverMotor.h"
 #include "Definitions.h"
 
 #include <iostream>
@@ -37,7 +37,7 @@ string g_deviceName;
 string g_protocolStackName;
 string g_interfaceName;
 int g_baudrate = 0;
-const string g_programName = "RoverTest";
+const string g_programName = "RoverMotor";
 
 void  LogError(string functionName, int p_lResult, unsigned int p_ulErrorCode);
 void  PrintHeader();
@@ -49,36 +49,34 @@ int   EnableMotor(unsigned int* p_pErrorCode);
 int   DisableMotor(unsigned int* p_pErrorCode);
 
 // SINGLETON
-RoverTest* RoverTest::pinstance = 0;
-RoverTest* RoverTest::Instance()
+RoverMotor* RoverMotor::pinstance = 0;
+RoverMotor* RoverMotor::Instance()
 {
 	if (pinstance == 0) // first time call
 	{
-		pinstance = new RoverTest;
+		pinstance = new RoverMotor;
 	}
 	return pinstance;
 }
-RoverTest::RoverTest()
+RoverMotor::RoverMotor()
 {
-	timer = new Timer();
 }
 
-RoverTest & RoverTest::operator=(const RoverTest & olc)
+RoverMotor & RoverMotor::operator=(const RoverMotor & olc)
 {
 	// shall never get called
-	RoverTest* lc = new RoverTest();
+	RoverMotor* lc = new RoverMotor();
 	return *lc;
 }
 
-RoverTest::~RoverTest()
+RoverMotor::~RoverMotor()
 {
-	delete timer;
 	delete pinstance;
 }
 
 
 // 
-int RoverTest::openEpos()
+int RoverMotor::openEpos()
 {
 	int lResult = MMC_FAILED;
 	unsigned int ulErrorCode = 0;
@@ -109,7 +107,7 @@ int RoverTest::openEpos()
 	return lResult;
 }
 
-int RoverTest::disableEpos()
+int RoverMotor::disableEpos()
 {
 	int lResult = MMC_FAILED;
 	unsigned int ulErrorCode = 0;
@@ -122,7 +120,7 @@ int RoverTest::disableEpos()
 }
 
 
-int RoverTest::closeEpos()
+int RoverMotor::closeEpos()
 {
 	int lResult = MMC_FAILED;
 	unsigned int ulErrorCode = 0;
@@ -136,13 +134,13 @@ int RoverTest::closeEpos()
 	return lResult;
 }
 
-int RoverTest::home()
+int RoverMotor::home()
 {
 	int lResult = MMC_SUCCESS;
 	unsigned int ulErrorCode = 0;
 
-	cout << "[RoverTest.home] Begining Homing:" << endl;
-	cout << "[RoverTest.home] NodeId A = " << g_usNodeId_a << ", NodeID B = " << g_usNodeId_b << endl;
+	cout << "[RoverMotor.home] Begining Homing:" << endl;
+	cout << "[RoverMotor.home] NodeId A = " << g_usNodeId_a << ", NodeID B = " << g_usNodeId_b << endl;
 
 	// --------------------------------------
 	// 	Activation
@@ -196,7 +194,7 @@ int RoverTest::home()
 			lResult = MMC_FAILED;
 			return lResult;
 		}
-		cout << "[RoverTest.home] Goal: 0. Pos A: " << pPositionIs_a << ", Pos B: " << pPositionIs_b << endl; 
+		cout << "[RoverMotor.home] Goal: 0. Pos A: " << pPositionIs_a << ", Pos B: " << pPositionIs_b << endl; 
 
 		// check
 		if ((abs(pPositionIs_a) < POSITION_TOLERANCE) && (abs(pPositionIs_b) < POSITION_TOLERANCE))
@@ -216,19 +214,39 @@ int RoverTest::home()
 		 	return lResult;
 		}
 	}
-	cout << "[RoverTest.home] Finished." << endl;
+	cout << "[RoverMotor.home] Finished." << endl;
 
 	return lResult;
 }
 
+int RoverMotor::readCurrent(short *current)
+{
 
-int RoverTest::rotate(long speed_motor_a, long speed_motor_b, int time_ms)
+	int lResult = MMC_SUCCESS;
+	unsigned int ulErrorCode = 0;
+
+	short c1,c2;
+    if (VCS_GetCurrentIs(g_pKeyHandle_a, g_usNodeId_a, &c1, &ulErrorCode) == 0)
+	{
+		LogError("VCS_GetCurrentIs", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+	}
+    if (VCS_GetCurrentIs(g_pKeyHandle_b, g_usNodeId_b, &c2, &ulErrorCode) == 0)
+	{
+		LogError("VCS_GetCurrentIs", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+	}
+
+	current[0] = c1;
+	current[1] = c2;
+}
+
+int RoverMotor::rotate(long speed_motor_a, long speed_motor_b)
 {
 	int lResult              = MMC_SUCCESS;
 	unsigned int ulErrorCode = 0;
-	cout << "[RoverTest.rotate] Begining executing, time = " << time_ms << " ms" << endl;
-	cout << "[RoverTest.rotate] A: Node id = " << g_usNodeId_a << ", Speed = " << speed_motor_a << endl;
-	cout << "[RoverTest.rotate] B: Node id = " << g_usNodeId_b << ", Speed = " << speed_motor_b << endl;
+	cout << "[RoverMotor.rotate] A: Node id = " << g_usNodeId_a << ", Speed = " << speed_motor_a << endl;
+	cout << "[RoverMotor.rotate] B: Node id = " << g_usNodeId_b << ", Speed = " << speed_motor_b << endl;
 
 	// --------------------------------------
 	// 	Activation
@@ -249,28 +267,64 @@ int RoverTest::rotate(long speed_motor_a, long speed_motor_b, int time_ms)
 	// --------------------------------------
 	// 	Send command
 	// --------------------------------------
-	timer->tic();
-	int timenow = 0;
-	for(;;)
+	if(VCS_SetVelocityMust(g_pKeyHandle_a, g_usNodeId_a, speed_motor_a, &ulErrorCode) == 0)
 	{
-		if(VCS_SetVelocityMust(g_pKeyHandle_a, g_usNodeId_a, speed_motor_a, &ulErrorCode) == 0)
-		{
-			LogError("VCS_SetVelocityMust", lResult, ulErrorCode);
-			lResult = MMC_FAILED;
-			return lResult;
-		}
-		if(VCS_SetVelocityMust(g_pKeyHandle_b, g_usNodeId_b, speed_motor_b, &ulErrorCode) == 0)
-		{
-			LogError("VCS_SetVelocityMust", lResult, ulErrorCode);
-			lResult = MMC_FAILED;
-			return lResult;
-		}
-		timenow = int(timer->toc());
-		if (timenow > time_ms) 
-			break;
+		LogError("VCS_SetVelocityMust", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+		return lResult;
+	}
+	if(VCS_SetVelocityMust(g_pKeyHandle_b, g_usNodeId_b, speed_motor_b, &ulErrorCode) == 0)
+	{
+		LogError("VCS_SetVelocityMust", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+		return lResult;
 	}
 
-	cout << "[RoverTest.rotate] Execution terminated normally." << endl;
+	cout << "[RoverMotor.rotate] Moters are running." << endl;
+
+	return lResult;
+}
+
+int RoverMotor::stop()
+{
+	int lResult              = MMC_SUCCESS;
+	unsigned int ulErrorCode = 0;
+	cout << "[RoverMotor.stop] A: Node id = " << g_usNodeId_a << ", Stopping. " << endl;
+	cout << "[RoverMotor.stop] B: Node id = " << g_usNodeId_b << ", Stopping. " << endl;
+
+	// --------------------------------------
+	// 	Activation
+	// --------------------------------------
+	if(VCS_ActivateVelocityMode(g_pKeyHandle_a, g_usNodeId_a, &ulErrorCode) == 0)
+	{
+		LogError("VCS_ActivateVelocityMode", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+		return lResult;
+	}
+	if(VCS_ActivateVelocityMode(g_pKeyHandle_b, g_usNodeId_b, &ulErrorCode) == 0)
+	{
+		LogError("VCS_ActivateVelocityMode", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+		return lResult;
+	}
+
+	// --------------------------------------
+	// 	Send command
+	// --------------------------------------
+	if(VCS_SetVelocityMust(g_pKeyHandle_a, g_usNodeId_a, 0, &ulErrorCode) == 0)
+	{
+		LogError("VCS_SetVelocityMust", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+		return lResult;
+	}
+	if(VCS_SetVelocityMust(g_pKeyHandle_b, g_usNodeId_b, 0, &ulErrorCode) == 0)
+	{
+		LogError("VCS_SetVelocityMust", lResult, ulErrorCode);
+		lResult = MMC_FAILED;
+		return lResult;
+	}
+
+	cout << "[RoverMotor.stop] Moters are stopped." << endl;
 
 	return lResult;
 }

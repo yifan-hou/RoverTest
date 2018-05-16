@@ -1,31 +1,33 @@
 cmake_minimum_required(VERSION 2.8.3)
 #######################
-project(Epos)
-set (CMAKE_CXX_FLAGS "--std=gnu++11 ${CMAKE_CXX_FLAGS}")
+project(RoverExperiment)
+
+add_compile_options(-std=c++11)
 
 # find_package(Boost REQUIRED COMPONENTS system)
-
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  robot_comm
+  matvec
+)
 
 include_directories(
   include/
+  ${catkin_INCLUDE_DIRS}
 )
 
 #######################
 ## Compile Libraries ##
 #######################
 
-add_library(RoverDriver SHARED src/RoverTest.cpp src/TimerLinux.cpp)
+add_library(RoverDriver SHARED src/RoverMotor.cpp src/TimerLinux.cpp)
 target_link_libraries(RoverDriver 
+  ${catkin_LIBRARIES}
   libEposCmd.so
 )
 
-add_executable(unit_test src/test.cpp)
-target_link_libraries(unit_test
-  RoverDriver
-)
-
-add_executable(closeEpos src/closeEpos.cpp)
-target_link_libraries(closeEpos
+add_executable(RoverExperiment src/main.cpp)
+target_link_libraries(RoverExperiment
   RoverDriver
 )
 

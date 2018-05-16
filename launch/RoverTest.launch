@@ -1,0 +1,6 @@
+<launch>
+  <!-- <rosparam file="$(find forcecontrol)/config/hardware_params.yaml" command="load"/> -->
+
+  <node pkg="netft_rdt_driver" name="netft_node" type="netft_node"  output="screen" />
+  <node pkg="RoverTest" name="RoverExperiment" type="RoverExperiment"  output="screen" />
+</launch>

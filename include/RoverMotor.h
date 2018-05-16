@@ -1,7 +1,5 @@
-#ifndef _ROVERTEST_CLASS_HEADER_
-#define _ROVERTEST_CLASS_HEADER_
-
-#include "TimerLinux.h"
+#ifndef _RoverMotor_CLASS_HEADER_
+#define _RoverMotor_CLASS_HEADER_
 
 #ifndef MMC_SUCCESS
 	#define MMC_SUCCESS 0
@@ -16,11 +14,11 @@
 #endif
 
 
-class RoverTest
+class RoverMotor
 {
 public:
 	/// for singleton implementation 
-	static RoverTest* Instance();
+	static RoverMotor* Instance();
 
 	// EPOS
 	int openEpos();
@@ -28,24 +26,20 @@ public:
 	int closeEpos();
 
 	int home();
-	int rotate(long speed_motor_a, long speed_motor_b, int time_ms);
+	int rotate(long speed_motor_a, long speed_motor_b);
+	int readCurrent(short *);
+	int stop();
 
 private:
-	// low level
-	int closeFinger(int);
-
 	/// for singleton implementation 
-	static RoverTest* pinstance; 
+	static RoverMotor* pinstance; 
 	/// for singleton implementation 
-	RoverTest(); 
+	RoverMotor(); 
 	/// for singleton implementation 
-	RoverTest(const RoverTest&); 
+	RoverMotor(const RoverMotor&); 
 	/// for singleton implementation 
-	RoverTest& operator= (const RoverTest&); 
-	~RoverTest(); 
-
-	Timer *timer;
-
+	RoverMotor& operator= (const RoverMotor&); 
+	~RoverMotor(); 
 };
 
 #endif
